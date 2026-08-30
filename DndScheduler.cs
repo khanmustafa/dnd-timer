@@ -15,9 +15,14 @@ public static class DndScheduler
     internal const int NotificationId = 2403;
     const string NotificationChannelId = "active_dnd_timer";
 
-    public static void Start(Context context, int minutes, string? title = null)
+    public static bool Start(Context context, int minutes, string? title = null)
     {
         var manager = (NotificationManager)context.GetSystemService(Context.NotificationService)!;
+        if (!manager.IsNotificationPolicyAccessGranted)
+        {
+            Android.Util.Log.Warn("DndTimer", "DND activation skipped because notification policy access is missing.");
+            return false;
+        }
         var preferences = context.GetSharedPreferences(PreferencesName, FileCreationMode.Private)!;
         var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var previousEnd = preferences.GetLong(EndTimeKey, 0);
@@ -37,6 +42,7 @@ public static class DndScheduler
         manager.SetInterruptionFilter(InterruptionFilter.None);
         Schedule(context, TimeSpan.FromMilliseconds(effectiveEnd - now));
         StartCountdownService(context);
+        return true;
     }
 
     public static void Cancel(Context context, bool restoreDnd)

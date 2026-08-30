@@ -6,9 +6,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationId>com.khans.dndtimer</ApplicationId>
     <ApplicationTitle>DND Timer</ApplicationTitle>
-    <ApplicationVersion>4</ApplicationVersion>
-    <ApplicationDisplayVersion>2.0</ApplicationDisplayVersion>
+    <ApplicationVersion>7</ApplicationVersion>
+    <ApplicationDisplayVersion>2.3</ApplicationDisplayVersion>
     <SupportedOSPlatformVersion>23</SupportedOSPlatformVersion>
     <AndroidPackageFormats>apk</AndroidPackageFormats>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Xamarin.Google.Android.Material" Version="1.14.0.6" />
+  </ItemGroup>
 </Project>

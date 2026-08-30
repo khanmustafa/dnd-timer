@@ -8,12 +8,14 @@ using Android.OS;
 using Android.Provider;
 using Android.Views;
 using Android.Widget;
+using AndroidX.AppCompat.App;
+using Google.Android.Material.Button;
 using Orientation = Android.Widget.Orientation;
 
 namespace DndTimer;
 
-[Activity(Label = "DND Timer", MainLauncher = true, Exported = true)]
-public sealed class MainActivity : Activity
+[Activity(Label = "DND Timer", MainLauncher = true, Exported = true, Theme = "@style/AppTheme")]
+public sealed class MainActivity : AppCompatActivity
 {
     static readonly Color PageColor = Color.Rgb(248, 247, 252);
     static readonly Color InkColor = Color.Rgb(31, 31, 38);
@@ -24,7 +26,7 @@ public sealed class MainActivity : Activity
     static readonly Color ActiveSoftColor = Color.Rgb(221, 245, 235);
     TextView _minutesLabel = null!, _durationHint = null!, _statusTitle = null!, _statusLabel = null!, _statusIcon = null!;
     LinearLayout _statusCard = null!;
-    Button _startButton = null!, _stopButton = null!;
+    MaterialButton _startButton = null!, _stopButton = null!;
     readonly Handler _handler = new(Looper.MainLooper!);
     Action? _ticker;
     float _density;
@@ -40,14 +42,12 @@ public sealed class MainActivity : Activity
             Window!.DecorView.SystemUiVisibility = (StatusBarVisibility)SystemUiFlags.LightStatusBar;
 
         var root = new LinearLayout(this) { Orientation = Orientation.Vertical };
-        root.SetPadding(Dp(20), Dp(28), Dp(20), Dp(28));
+        root.SetPadding(Dp(20), Dp(52), Dp(20), Dp(28));
         root.SetBackgroundColor(PageColor);
 
         var brandRow = new LinearLayout(this) { Orientation = Orientation.Horizontal };
         brandRow.SetGravity(GravityFlags.CenterVertical);
-        var brandIcon = Label("◑", 25, PrimaryColor, true);
-        brandIcon.Gravity = GravityFlags.Center;
-        brandIcon.Background = Rounded(PrimarySoftColor, 18);
+        var brandIcon = new ImageView(this); brandIcon.SetImageResource(Resource.Mipmap.app_icon);
         brandRow.AddView(brandIcon, new LinearLayout.LayoutParams(Dp(48), Dp(48)));
         var brandText = new LinearLayout(this) { Orientation = Orientation.Vertical };
         brandText.SetPadding(Dp(14), 0, 0, 0);
@@ -109,17 +109,17 @@ public sealed class MainActivity : Activity
         }
         presetsScroll.AddView(presets); durationCard.AddView(presetsScroll, new LinearLayout.LayoutParams(-1, Dp(58)));
 
-        _startButton = new Button(this) { Text = "Start quiet time", TextSize = 16 };
+        _startButton = new MaterialButton(this) { Text = "Start quiet time", TextSize = 16, CornerRadius = Dp(18), InsetTop = 0, InsetBottom = 0 };
         _startButton.SetTextColor(Color.White); _startButton.SetTypeface(null, TypefaceStyle.Bold);
         _startButton.BackgroundTintList = ColorStateList.ValueOf(PrimaryColor);
         _startButton.Click += (_, _) => StartTimer(slider.Progress);
         root.AddView(_startButton, new LinearLayout.LayoutParams(-1, Dp(60)) { TopMargin = Dp(20) });
-        _stopButton = new Button(this) { Text = "Cancel quiet time", TextSize = 16, Visibility = ViewStates.Gone };
+        _stopButton = new MaterialButton(this) { Text = "Cancel quiet time", TextSize = 16, Visibility = ViewStates.Gone, CornerRadius = Dp(18), InsetTop = 0, InsetBottom = 0 };
         _stopButton.SetTextColor(Color.Rgb(151, 48, 55)); _stopButton.SetTypeface(null, TypefaceStyle.Bold);
         _stopButton.BackgroundTintList = ColorStateList.ValueOf(Color.Rgb(255, 232, 232));
         _stopButton.Click += (_, _) => { DndScheduler.Cancel(this, true); UpdateStatus(); };
         root.AddView(_stopButton, new LinearLayout.LayoutParams(-1, Dp(60)) { TopMargin = Dp(20) });
-        var schedulesButton = new Button(this) { Text = "Manage daily schedules", TextSize = 15 };
+        var schedulesButton = new MaterialButton(this) { Text = "Manage daily schedules", TextSize = 15, CornerRadius = Dp(18), InsetTop = 0, InsetBottom = 0 };
         schedulesButton.SetTextColor(PrimaryColor); schedulesButton.SetTypeface(null, TypefaceStyle.Bold);
         schedulesButton.BackgroundTintList = ColorStateList.ValueOf(PrimarySoftColor);
         schedulesButton.Click += (_, _) => StartActivity(new Intent(this, typeof(ScheduleActivity)));
