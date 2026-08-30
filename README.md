@@ -7,6 +7,9 @@ A compact native **.NET for Android** app that enables total-silence Do Not Dist
 - Modern Android 14-style interface
 - Duration slider from 0 to 120 minutes
 - Quick presets for 15, 30, 45, 60, 90, and 120 minutes
+- Up to 10 named daily schedules such as Fajr, Zuhr, and Asr
+- Enable, disable, edit, or delete each schedule independently
+- Automatic schedule recovery after reboot, app update, clock change, or time-zone change
 - Live countdown in the app and notification panel
 - **Cancel DND** action directly in the notification
 - Automatic restoration when the countdown expires
@@ -59,6 +62,17 @@ Android controls these privileges through system settings. The app guides the us
 
 The notification remains visible while a session is active because Android uses it for the foreground countdown service.
 
+## Daily schedules
+
+Open **Manage daily schedules** from the main screen, then select **Add schedule**. Each entry contains:
+
+- A title
+- A daily start time
+- A DND duration from 1 to 120 minutes
+- An enabled/disabled toggle
+
+The app stores all schedules locally on the device. Up to 10 schedules can be active. When schedules overlap, DND remains active until the latest scheduled end time and then restores the sound mode that was present before the first schedule began.
+
 ## How restoration works
 
 When a session starts, the app saves the current interruption filter before enabling total silence. It schedules an exact alarm and starts a foreground countdown service. Either path can restore the saved filter when time expires, remove the notification, and clear the timer state.
@@ -69,6 +83,8 @@ On Android 15 and newer, third-party apps no longer directly control the global 
 
 - `MainActivity.cs` — Android 14-style UI and permission flow
 - `DndScheduler.cs` — DND state, countdown service, alarms, notification, and receivers
+- `ScheduleManager.cs` — schedule persistence, daily alarm calculation, and background trigger receiver
+- `ScheduleActivity.cs` — schedule list and editor
 - `Properties/AndroidManifest.xml` — required Android permissions
 - `DndTimer.csproj` — .NET Android project configuration
 

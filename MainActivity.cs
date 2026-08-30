@@ -119,6 +119,11 @@ public sealed class MainActivity : Activity
         _stopButton.BackgroundTintList = ColorStateList.ValueOf(Color.Rgb(255, 232, 232));
         _stopButton.Click += (_, _) => { DndScheduler.Cancel(this, true); UpdateStatus(); };
         root.AddView(_stopButton, new LinearLayout.LayoutParams(-1, Dp(60)) { TopMargin = Dp(20) });
+        var schedulesButton = new Button(this) { Text = "Manage daily schedules", TextSize = 15 };
+        schedulesButton.SetTextColor(PrimaryColor); schedulesButton.SetTypeface(null, TypefaceStyle.Bold);
+        schedulesButton.BackgroundTintList = ColorStateList.ValueOf(PrimarySoftColor);
+        schedulesButton.Click += (_, _) => StartActivity(new Intent(this, typeof(ScheduleActivity)));
+        root.AddView(schedulesButton, new LinearLayout.LayoutParams(-1, Dp(56)) { TopMargin = Dp(10) });
         var footnote = Label("Alarms are silenced during quiet time. Your previous sound mode returns automatically.", 12, MutedColor);
         footnote.Gravity = GravityFlags.Center; footnote.SetPadding(Dp(12), Dp(15), Dp(12), 0); root.AddView(footnote);
 

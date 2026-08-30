@@ -9,23 +9,33 @@ public static class DndScheduler
     const string PreferencesName = "dnd_timer_state";
     const string EndTimeKey = "end_time_unix_ms";
     const string PreviousFilterKey = "previous_filter";
+    const string ActiveTitleKey = "active_title";
     const int AlarmRequestCode = 2401;
     const int CancelRequestCode = 2402;
     internal const int NotificationId = 2403;
     const string NotificationChannelId = "active_dnd_timer";
 
-    public static void Start(Context context, int minutes)
+    public static void Start(Context context, int minutes, string? title = null)
     {
-        Cancel(context, restoreDnd: false);
         var manager = (NotificationManager)context.GetSystemService(Context.NotificationService)!;
         var preferences = context.GetSharedPreferences(PreferencesName, FileCreationMode.Private)!;
-        preferences.Edit()!
-            .PutInt(PreviousFilterKey, (int)manager.CurrentInterruptionFilter)
-            .PutLong(EndTimeKey, DateTimeOffset.UtcNow.AddMinutes(minutes).ToUnixTimeMilliseconds())
-            .Apply();
+        var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var previousEnd = preferences.GetLong(EndTimeKey, 0);
+        var requestedEnd = DateTimeOffset.UtcNow.AddMinutes(minutes).ToUnixTimeMilliseconds();
+        var alreadyActive = previousEnd > now;
+        if (!alreadyActive) Cancel(context, restoreDnd: false);
+
+        preferences = context.GetSharedPreferences(PreferencesName, FileCreationMode.Private)!;
+        var editor = preferences.Edit()!;
+        if (!alreadyActive) editor.PutInt(PreviousFilterKey, (int)manager.CurrentInterruptionFilter);
+        var effectiveEnd = Math.Max(previousEnd, requestedEnd);
+        editor.PutLong(EndTimeKey, effectiveEnd);
+        if (!string.IsNullOrWhiteSpace(title) && requestedEnd >= previousEnd) editor.PutString(ActiveTitleKey, title);
+        else if (!alreadyActive) editor.PutString(ActiveTitleKey, "Quiet time");
+        editor.Apply();
 
         manager.SetInterruptionFilter(InterruptionFilter.None);
-        Schedule(context, TimeSpan.FromMinutes(minutes));
+        Schedule(context, TimeSpan.FromMilliseconds(effectiveEnd - now));
         StartCountdownService(context);
     }
 
@@ -52,7 +62,7 @@ public static class DndScheduler
             }
         }
 
-        preferences.Edit()!.Remove(EndTimeKey)!.Remove(PreviousFilterKey)!.Apply();
+        preferences.Edit()!.Remove(EndTimeKey)!.Remove(PreviousFilterKey)!.Remove(ActiveTitleKey)!.Apply();
     }
 
     public static long GetRemainingMilliseconds(Context context)
@@ -101,6 +111,8 @@ public static class DndScheduler
     internal static Notification BuildNotification(Context context, TimeSpan remaining)
     {
         var manager = (NotificationManager)context.GetSystemService(Context.NotificationService)!;
+        var activeTitle = context.GetSharedPreferences(PreferencesName, FileCreationMode.Private)!
+            .GetString(ActiveTitleKey, "Quiet time") ?? "Quiet time";
         if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
         {
             var channel = new NotificationChannel(
@@ -130,7 +142,7 @@ public static class DndScheduler
 
         builder
             .SetSmallIcon(Android.Resource.Drawable.IcDialogInfo)
-            .SetContentTitle("Do Not Disturb is active")
+            .SetContentTitle($"{activeTitle} · DND active")
             .SetContentText("Time remaining")
             .SetContentIntent(openPendingIntent)
             .SetOngoing(true)
@@ -201,11 +213,15 @@ public sealed class DndCancelReceiver : BroadcastReceiver
 }
 
 [BroadcastReceiver(Enabled = true, Exported = true, DirectBootAware = true)]
-[IntentFilter([Intent.ActionBootCompleted])]
+[IntentFilter([Intent.ActionBootCompleted, Intent.ActionMyPackageReplaced, Intent.ActionTimeChanged, Intent.ActionTimezoneChanged])]
 public sealed class BootReceiver : BroadcastReceiver
 {
     public override void OnReceive(Context? context, Intent? intent)
     {
-        if (context is not null) DndScheduler.ResumeAfterBoot(context);
+        if (context is not null)
+        {
+            DndScheduler.ResumeAfterBoot(context);
+            ScheduleManager.RescheduleAll(context);
+        }
     }
 }
