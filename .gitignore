@@ -1,0 +1,26 @@
+# .NET build output
+bin/
+obj/
+
+# IDE and user settings
+.vs/
+.vscode/
+*.user
+*.suo
+*.userprefs
+
+# Signing material
+*.keystore
+*.jks
+*.p12
+*.pem
+*.key
+
+# Android packages and logs
+*.apk
+*.aab
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
